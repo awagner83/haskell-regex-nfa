@@ -1,40 +1,45 @@
+module Regex where
 
-import Data.List (foldl1)
+import Control.Monad (join)
 
 
-data Regex = Step Char Regex
+data Match = LiteralChar Char | AnyChar deriving (Eq)
+data Regex = Step Match Regex
            | Split Regex Regex
-           | Match
+           | MatchEnd
+           deriving (Eq)
 
--- | Does string match given regular expression?  This is a bit naive at the
---   the moment.  Need to step through splits concurrently
+
+-- | Does string match given regular expression?
 matches :: String -> Regex -> Bool
-matches [] Match = True
-matches [] _     = False
-matches _  Match = False
-matches (x:xs) (Step c r) | c == x = matches xs r
-                          | otherwise = False
-matches xs (Split l r) = matches xs l || matches xs r
+matches s r = go s [r]
+    where go [] rs = any (MatchEnd ==) rs
+          go _  [] = False
+          go (x:xs) rs = go xs (advanceState x rs)
+
+
+-- | Advance one step in concurrent tracking of states
+advanceState :: Char -> [Regex] -> [Regex]
+advanceState c = join . map go
+    where go (Step m r) | m `matchesChar` c = [r]
+                        | otherwise         = []
+          go (Split l r) = join [go l, go r]
+          go MatchEnd    = []
+
+
+matchesChar :: Match -> Char -> Bool
+matchesChar (LiteralChar x) c = x == c
+matchesChar AnyChar         _ = True
+
 
 -- | Build repeating regex sequence
 repeating :: (Regex -> Regex) -> Regex -> Regex
 repeating left right = let r = Split (left r) right in r
 
+
 -- | Literal regex match
 literal :: String -> Regex -> Regex
-literal (x:[]) r = Step x r
-literal (x:xs) r = Step x (literal xs r)
+literal (x:[]) r = Step (LiteralChar x) r
+literal (x:xs) r = Step (LiteralChar x) (literal xs r)
 
-
-{- Since we don't have a regex compiler yet, here are some prebuild expressions
-   to play with -}
-
--- regex: ab+a
-m1 = Step 'a' $ repeating (Step 'b') $ Step 'a' $ Match
-
--- regex: a(bb)+a
-m2 = Step 'a' $ repeating (Step 'b' . Step 'b') $ Step 'a' $ Match
-
--- regex: bob|fred
-m3 = Split (literal "bob" $ Match) (literal "fred" $ Match)
 
