@@ -1,4 +1,4 @@
-module Compiler2 where
+module Compiler where
 
 import Control.Applicative ((<$>))
 import Data.List (foldl1')
@@ -29,5 +29,5 @@ verticalbar = try $ do
     return $ (\joinTo -> Split (l joinTo) (r joinTo))
 
 -- | Helper for constructing postfix operator parsers
-postfix op f = try (step >>= (>>) (char op) . return . f)
+postfix op f = try (step >>= (char op >>) . return . f)
 
