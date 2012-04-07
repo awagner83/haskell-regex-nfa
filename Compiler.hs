@@ -1,60 +1,33 @@
-module Compiler where
+module Compiler2 where
 
-import Control.Monad
-import Data.Maybe
-import Data.List (foldl1', groupBy)
-import Text.Parsec ((<|>), many1)
-import qualified Text.Parsec as P
+import Control.Applicative ((<$>))
+import Data.List (foldl1')
+import Text.Parsec
 import Text.Parsec.String
+
 import Regex
 
 
-data Token = TokenMatch (Regex -> Regex)
-           | TokenOperator ((Regex -> Regex) -> (Regex -> Regex))
-
--- | Construct Regex from given string
 compile :: String -> Regex
-compile s = case (P.parse regex "regex" s) of
+compile s = case (parse regex "regex 2000" s) of
                 Left err -> error $ show err
-                Right r  -> r
+                Right rx -> rx MatchEnd
 
--- | Main regex parser entry point
-regex :: Parser Regex
-regex = do
-    steps <- many1 token
-    return $ (foldRegex $ applyTokenOp steps) MatchEnd
+-- | Token Parsers
+regex       = foldl1' (.) <$> many1 segment
+segment     = verticalbar <|> asterisk <|> qmark <|> step
+step        = dot <|> escaped <|> character
+character   = Step . LiteralChar <$> anyChar
+escaped     = char '\\' >> character
+dot         = char '.'  >> return (Step AnyChar)
+qmark       = postfix '?' (\l r -> Split (l r) r)
+asterisk    = postfix '*' (\l r -> let s = Split (l s) r in s)
+verticalbar = try $ do
+    l <- step
+    char '|'
+    r <- step
+    return $ (\joinTo -> Split (l joinTo) (r joinTo))
 
--- Tokens
-tokenMatch = return . TokenMatch . Step
-token = alternation <|> zeroOrMore <|> anyChar <|> escapedChar <|> literalChar
-anyChar = P.char '.' >> (tokenMatch AnyChar)
-escapedChar = P.char '\\' >> P.anyChar >>= tokenMatch . LiteralChar
-literalChar = P.anyChar >>= tokenMatch . LiteralChar
-zeroOrMore = P.char '*' >> (return $ TokenOperator repeating)
-alternation = do
-    P.char '|'
-    (TokenMatch r) <- token
-    return (TokenOperator $ split r)
-
--- | Apply token operators and return regex
-applyTokenOp :: [Token] -> [(Regex -> Regex)]
-applyTokenOp = join . map (go . reverse) . groupBy (\a b -> isOperator b)
-    where go (TokenOperator o:TokenMatch t:ts) = go ((TokenMatch $ o t):ts)
-          go ts = (reverse . catMaybes . map unpackToken) ts
-
-foldRegex :: [(Regex -> Regex)] -> (Regex -> Regex)
-foldRegex = foldl1' (.)
-
-unpackToken :: Token -> Maybe (Regex -> Regex)
-unpackToken (TokenMatch t) = Just t
-unpackToken _              = Nothing
-
-isOperator (TokenOperator _) = True
-isOperator _                 = False
-
-repeating :: (Regex -> Regex) -> Regex -> Regex
-repeating left right = let r = Split (left r) right in r
-
-split :: (Regex -> Regex) -> (Regex -> Regex) -> (Regex -> Regex)
-split right left joined = Split (left joined) (right joined)
+-- | Helper for constructing postfix operator parsers
+postfix op f = try (step >>= (>>) (char op) . return . f)
 
