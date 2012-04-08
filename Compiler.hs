@@ -2,7 +2,7 @@ module Compiler where
 
 import Control.Applicative ((<$>))
 import Data.List (foldl1')
-import Text.Parsec
+import Text.Parsec hiding (between)
 import Text.Parsec.String
 
 import Regex
@@ -22,17 +22,20 @@ escaped     = char '\\' >> Step . LiteralChar <$> anyChar
 dot         = char '.'  >> return (Step AnyChar)
 qmark       = postfix '?' (\l r -> Split (l r) r)
 asterisk    = postfix '*' (\l r -> let s = Split (l s) r in s)
+group       = between '(' regex ')'
 verticalbar = try $ do
     l <- step
     char '|'
     r <- step
     return $ (\joinTo -> Split (l joinTo) (r joinTo))
-group       = do
-    char '('
-    r <- regex
-    char ')'
-    return r
 
 -- | Helper for constructing postfix operator parsers
 postfix op f = try (step >>= (char op >>) . return . f)
+
+-- | Helper for finding a token/pattern between two chars
+between l token r = do
+    char l
+    t <- token
+    char r
+    return t
 
