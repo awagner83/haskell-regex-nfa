@@ -12,18 +12,25 @@ data Regex = Step Match Regex
 
 -- | Does string match given regular expression?
 matches :: String -> Regex -> Bool
-matches s r = go s [r]
-    where go [] rs     = any (MatchEnd ==) rs
+matches s r = checkNext s [r]
+    where checkNext xs = go xs . followSplits
+          go [] rs     = any (MatchEnd ==) rs
           go _  []     = False
-          go (x:xs) rs = go xs (advanceState x rs)
+          go (x:xs) rs = checkNext xs $ followSteps x rs
 
--- | Advance one step in concurrent tracking of states
-advanceState :: Char -> [Regex] -> [Regex]
-advanceState c = join . map go
-    where go (Step m r) | m `matchesChar` c = [r]
-                        | otherwise         = []
-          go (Split l r)                    = join [go l, go r]
-          go MatchEnd                       = []
+-- | Advance state for all 'Splits' found in list of Regexes
+followSplits :: [Regex] -> [Regex]
+followSplits = join . map followSplit
+    where followSplit (Split l r) = [l, r]
+          followSplit r           = [r]
+
+-- | Advance state for all 'Steps', pruning those that are no longer relevant
+followSteps :: Char -> [Regex] -> [Regex]
+followSteps c = join . map followStep
+    where followStep (Step m r) | m `matchesChar` c = [r]
+                                | otherwise         = []
+          followStep MatchEnd                       = []
+          followStep r                              = [r]
 
 -- | Check if char matches given Match data
 matchesChar :: Match -> Char -> Bool
