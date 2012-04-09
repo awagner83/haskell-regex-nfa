@@ -13,24 +13,31 @@ compile s = case (parse regex "regex 2000" s) of
                 Left err -> error $ show err
                 Right rx -> rx MatchEnd
 
+-- | Top-level parser & alternatives in order of precedence.
+--   This is broken up like this so we don't get caught in never-ending parse.
+regex       = foldMany1 level1
+level1      = verticalbar <|> level2
+level2      = asterisk <|> qmark <|> level3
+level3      = group <|> dot <|> escaped <|> character
+
 -- | Token Parsers
-regex       = foldl1' (.) <$> many1 segment
-segment     = verticalbar <|> asterisk <|> qmark <|> step
-step        = group <|> dot <|> escaped <|> character
-character   = Step . LiteralChar <$> noneOf "()."
+character   = Step . LiteralChar <$> noneOf "().|"
 escaped     = char '\\' >> Step . LiteralChar <$> anyChar
 dot         = char '.'  >> return (Step AnyChar)
 qmark       = postfix '?' (\l r -> Split (l r) r)
 asterisk    = postfix '*' (\l r -> let s = Split (l s) r in s)
 group       = between '(' regex ')'
 verticalbar = try $ do
-    l <- step
+    l <- foldMany1 level2
     char '|'
-    r <- step
+    r <- foldMany1 level2
     return $ (\joinTo -> Split (l joinTo) (r joinTo))
 
 -- | Helper for constructing postfix operator parsers
-postfix op f = try (step >>= (char op >>) . return . f)
+postfix op f = try (level3 >>= (char op >>) . return . f)
+
+-- | Find many (but at least one) regex tokens and fold them into one
+foldMany1 parser = foldl1' (.) <$> many1 parser
 
 -- | Helper for finding a token/pattern between two chars
 between l token r = do

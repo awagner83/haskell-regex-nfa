@@ -24,11 +24,12 @@ test = [ matchE   "a"                     "a"
        , matchE   "a(bb)*a"               "aa"
        , matchE   "a(bb)*a"               "abbbba"
        , nmatchE  "a(bb)*a"               "aba"
+       , matchE   "bob|fred"              "bob"
        , matchE   "(bob)|(fred)"          "bob"
-       , matchE   "(bob)|(fred)"          "fred"
+       , matchE   "(bob|fred)"            "fred"
        , nmatchE  "(bob)|(fred)"          "bill"
-       , matchE   "(bob)|(fred) smith"    "fred smith"
-       , matchE   "(bob)|(fred) smith"    "bob smith"
+       , matchE   "(bob|fred) smith"      "fred smith"
+       , matchE   "(bob|fred) smith"      "bob smith"
        ]
 
 main = print $ lefts test
