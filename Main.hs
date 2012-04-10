@@ -30,6 +30,9 @@ test = [ matchE   "a"                     "a"
        , nmatchE  "(bob)|(fred)"          "bill"
        , matchE   "(bob|fred) smith"      "fred smith"
        , matchE   "(bob|fred) smith"      "bob smith"
+       , matchE   "a+"                    "a"
+       , matchE   "a+"                    "aaa"
+       , nmatchE  "a+"                    ""
        ]
 
 main = print $ lefts test

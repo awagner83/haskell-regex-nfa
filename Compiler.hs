@@ -17,7 +17,7 @@ compile s = case (parse regex "regex 2000" s) of
 --   This is broken up like this so we don't get caught in never-ending parse.
 regex       = foldMany1 level1
 level1      = verticalbar <|> level2
-level2      = asterisk <|> qmark <|> level3
+level2      = asterisk <|> plus <|> qmark <|> level3
 level3      = group <|> dot <|> escaped <|> character
 
 -- | Token Parsers
@@ -26,6 +26,7 @@ escaped     = char '\\' >> Step . LiteralChar <$> anyChar
 dot         = char '.'  >> return (Step AnyChar)
 qmark       = postfix '?' (\l r -> Split (l r) r)
 asterisk    = postfix '*' (\l r -> let s = Split (l s) r in s)
+plus        = postfix '+' (\l r -> let s = Split (l s) r in l s)
 group       = between '(' regex ')'
 verticalbar = try $ do
     l <- foldMany1 level2
