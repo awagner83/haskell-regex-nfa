@@ -1,4 +1,4 @@
-module Compiler where
+module Compiler (compile) where
 
 import Control.Applicative ((<$>))
 import Data.List (foldl1')

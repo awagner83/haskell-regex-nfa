@@ -1,4 +1,4 @@
-module Regex where
+module Regex (Match(..), Regex(..), matches) where
 
 import Control.Monad (join)
 
