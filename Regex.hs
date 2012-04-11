@@ -3,7 +3,10 @@ module Regex where
 import Control.Monad (join)
 
 
-data Match = LiteralChar Char | AnyChar deriving (Eq, Show)
+data Match = LiteralChar Char
+           | AnyChar
+           | Range Char Char
+           deriving (Eq, Show)
 data Regex = Step Match Regex
            | Split Regex Regex
            | MatchEnd
@@ -35,5 +38,6 @@ followSteps c = join . map followStep
 -- | Check if char matches given Match data
 matchesChar :: Match -> Char -> Bool
 matchesChar (LiteralChar x) c = x == c
+matchesChar (Range l r) c     = l <= c && c <= r
 matchesChar AnyChar         _ = True
 

@@ -18,7 +18,7 @@ compile s = case (parse regex "regex 2000" s) of
 regex       = foldMany1 level1
 level1      = verticalbar <|> level2
 level2      = asterisk <|> plus <|> qmark <|> level3
-level3      = group <|> dot <|> escaped <|> character
+level3      = group <|> range <|> dot <|> escaped <|> character
 
 -- | Token Parsers
 character   = Step . LiteralChar <$> noneOf "().|"
@@ -28,6 +28,15 @@ qmark       = postfix '?' (\l r -> Split (l r) r)
 asterisk    = postfix '*' (\l r -> let s = Split (l s) r in s)
 plus        = postfix '+' (\l r -> let s = Split (l s) r in l s)
 group       = between '(' regex ')'
+range       = Step <$> between '[' rangeExpr ']'
+
+rangeExpr :: Parser Match
+rangeExpr   = try $ do
+    l <- anyChar
+    char '-'
+    r <- anyChar
+    return $ Range l r
+
 verticalbar = try $ do
     l <- foldMany1 level2
     char '|'

@@ -1,3 +1,4 @@
+{- Run list of primitive tests.  Failing tests are displayed. -}
 
 import Compiler (compile)
 import Data.Either (lefts)
@@ -33,6 +34,9 @@ test = [ matchE   "a"                     "a"
        , matchE   "a+"                    "a"
        , matchE   "a+"                    "aaa"
        , nmatchE  "a+"                    ""
+       , matchE   "[a-z]"                 "a"
+       , matchE   "[a-z]"                 "b"
+       , nmatchE  "[a-z]"                 "2"
        ]
 
 main = print $ lefts test
