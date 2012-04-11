@@ -37,6 +37,9 @@ test = [ matchE   "a"                     "a"
        , matchE   "[a-z]"                 "a"
        , matchE   "[a-z]"                 "b"
        , nmatchE  "[a-z]"                 "2"
+       , matchE   "[A-Z123]+"             "ABC12"
+       , nmatchE  "[A-Z123]+"             "ABC15"
+       , matchE   "[0-9-]+"               "555-1212"
        ]
 
 main = print $ lefts test

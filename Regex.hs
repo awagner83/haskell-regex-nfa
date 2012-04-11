@@ -6,6 +6,7 @@ import Control.Monad (join)
 data Match = LiteralChar Char
            | AnyChar
            | Range Char Char
+           | MatchSet [Match]
            deriving (Eq, Show)
 data Regex = Step Match Regex
            | Split Regex Regex
@@ -39,5 +40,6 @@ followSteps c = join . map followStep
 matchesChar :: Match -> Char -> Bool
 matchesChar (LiteralChar x) c = x == c
 matchesChar (Range l r) c     = l <= c && c <= r
+matchesChar (MatchSet xs) c   = any (flip matchesChar c) xs
 matchesChar AnyChar         _ = True
 

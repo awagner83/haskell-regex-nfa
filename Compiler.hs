@@ -18,17 +18,19 @@ compile s = case (parse regex "regex 2000" s) of
 regex       = foldMany1 level1
 level1      = verticalbar <|> level2
 level2      = asterisk <|> plus <|> qmark <|> level3
-level3      = group <|> range <|> dot <|> escaped <|> character
+level3      = group <|> charset <|> dot <|> escaped <|> character
 
 -- | Token Parsers
-character   = Step . LiteralChar <$> noneOf "().|"
+character   = Step <$> literal
 escaped     = char '\\' >> Step . LiteralChar <$> anyChar
 dot         = char '.'  >> return (Step AnyChar)
 qmark       = postfix '?' (\l r -> Split (l r) r)
 asterisk    = postfix '*' (\l r -> let s = Split (l s) r in s)
 plus        = postfix '+' (\l r -> let s = Split (l s) r in l s)
 group       = between '(' regex ')'
-range       = Step <$> between '[' (infixop '-' anyChar Range) ']'
+charset     = Step . MatchSet <$> between '[' (many1 $ range <|> literal) ']'
+range       = infixop '-' anyChar Range
+literal     = LiteralChar <$> noneOf "().|[]"
 verticalbar = infixop '|' (foldMany1 level2) (\l r j -> Split (l j) (r j))
 
 -- | Helper for constructing postfix operator parsers
