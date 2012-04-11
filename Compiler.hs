@@ -28,20 +28,8 @@ qmark       = postfix '?' (\l r -> Split (l r) r)
 asterisk    = postfix '*' (\l r -> let s = Split (l s) r in s)
 plus        = postfix '+' (\l r -> let s = Split (l s) r in l s)
 group       = between '(' regex ')'
-range       = Step <$> between '[' rangeExpr ']'
-
-rangeExpr :: Parser Match
-rangeExpr   = try $ do
-    l <- anyChar
-    char '-'
-    r <- anyChar
-    return $ Range l r
-
-verticalbar = try $ do
-    l <- foldMany1 level2
-    char '|'
-    r <- foldMany1 level2
-    return $ (\joinTo -> Split (l joinTo) (r joinTo))
+range       = Step <$> between '[' (infixop '-' anyChar Range) ']'
+verticalbar = infixop '|' (foldMany1 level2) (\l r j -> Split (l j) (r j))
 
 -- | Helper for constructing postfix operator parsers
 postfix op f = try (level3 >>= (char op >>) . return . f)
@@ -55,4 +43,11 @@ between l token r = do
     t <- token
     char r
     return t
+
+-- | Helper for constructing infix operators
+infixop op argParser f = try $ do
+    l <- argParser
+    char op
+    r <- argParser
+    return $ f l r
 
