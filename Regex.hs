@@ -1,45 +1,35 @@
 module Regex (Match(..), Regex(..), matches) where
 
-import Control.Monad (join)
 
-
-data Match = LiteralChar Char
-           | AnyChar
-           | Range Char Char
-           | MatchSet [Match]
+data Match = LiteralChar Char | AnyChar | Range Char Char | MatchSet [Match]
            deriving (Eq, Show)
-data Regex = Step Match Regex
-           | Split Regex Regex
-           | MatchEnd
+data Regex = Step Match Regex | Split Regex Regex | MatchEnd
            deriving (Eq, Show)
+data State = State String [Regex]
 
 
 -- | Does string match given regular expression?
 matches :: String -> Regex -> Bool
-matches s r = checkNext s [r]
-    where checkNext xs = go xs . followSplits
-          go [] rs     = any (MatchEnd ==) rs
-          go _  []     = False
-          go (x:xs) rs = checkNext xs $ followSteps x rs
+matches s = isMatch . until isComplete runRegex . State s . expandSplit
+    where runRegex   (State (x:xs) rs) = State xs (advanceStates x rs)
+          isComplete (State    xs  rs) = null xs || null rs
+          isMatch    (State     _  rs) = any (MatchEnd ==) rs
 
--- | Advance state for all 'Splits' found in list of Regexes
-followSplits :: [Regex] -> [Regex]
-followSplits = join . map followSplit
-    where followSplit (Split l r) = [l, r]
-          followSplit r           = [r]
+-- | Advance regex states
+advanceStates :: Char -> [Regex] -> [Regex]
+advanceStates c = concat . map step
+    where step (Step m r) | charMatch c m = expandSplit r
+          step _                          = []
 
--- | Advance state for all 'Steps', pruning those that are no longer relevant
-followSteps :: Char -> [Regex] -> [Regex]
-followSteps c = join . map followStep
-    where followStep (Step m r) | m `matchesChar` c = [r]
-                                | otherwise         = []
-          followStep MatchEnd                       = []
-          followStep r                              = [r]
+-- | Advance new split states
+expandSplit :: Regex -> [Regex]
+expandSplit (Split l r) = [l, r]
+expandSplit r           = [r]
 
 -- | Check if char matches given Match data
-matchesChar :: Match -> Char -> Bool
-matchesChar (LiteralChar x) c = x == c
-matchesChar (Range l r) c     = l <= c && c <= r
-matchesChar (MatchSet xs) c   = any (flip matchesChar c) xs
-matchesChar AnyChar         _ = True
+charMatch :: Char -> Match -> Bool
+charMatch c (LiteralChar x) = x == c
+charMatch c (Range l r)     = l <= c && c <= r
+charMatch c (MatchSet xs)   = any (charMatch c) xs
+charMatch _ AnyChar         = True
 

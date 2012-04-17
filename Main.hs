@@ -5,10 +5,12 @@ import Data.Either (lefts)
 
 import Regex
 
-
+test :: [Either (String, String) ()]
 test = [ matchE   "a"                     "a"
        , matchE   "."                     "a"
+       , matchE   "a?"                    ""
        , matchE   ".*"                    "aa"
+       , matchE   ".*"                    ""
        , nmatchE  "."                     "aa"
        , nmatchE  "a"                     "b"
        , matchE   "a|b"                   "a"
@@ -19,6 +21,7 @@ test = [ matchE   "a"                     "a"
        , nmatchE  "a?"                    "b"
        , matchE   "a?b"                   "ab"
        , matchE   "a?b"                   "b"
+       , matchE   ".*"                    "a"
        , matchE   ".*a"                   "ca"
        , matchE   ".*a"                   "abca"
        , matchE   "a(bb)*a"               "abba"
@@ -32,6 +35,7 @@ test = [ matchE   "a"                     "a"
        , matchE   "(bob|fred) smith"      "fred smith"
        , matchE   "(bob|fred) smith"      "bob smith"
        , matchE   "a+"                    "a"
+       , matchE   "a+"                    "aa"
        , matchE   "a+"                    "aaa"
        , nmatchE  "a+"                    ""
        , matchE   "[a-z]"                 "a"
@@ -42,10 +46,13 @@ test = [ matchE   "a"                     "a"
        , matchE   "[0-9-]+"               "555-1212"
        ]
 
+main :: IO ()
 main = print $ lefts test
 
+match :: String -> String -> Bool
 match = (flip matches) . compile
-nomatch r s = not (match r s)
+
+matchE, nmatchE :: String -> String -> Either (String, String) ()
 matchE r s | match r s = Right ()
            | otherwise = Left (r, s)
 nmatchE r s | match r s = Left (r, s)
