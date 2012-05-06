@@ -8,13 +8,13 @@ import Text.Parsec.String
 import Text.Regex.NFA.Regex
 
 
-compile :: String -> Regex
-compile s = case (parse regex "regex 2000" s) of
-                Left err -> error $ show err
-                Right rx -> rx MatchEnd
+compile :: Monad m => String -> m Regex
+compile s = either (fail . show) closeRegex parseRegex
+      where closeRegex rx = return $ rx MatchEnd
+            parseRegex    = parse regex s "Regular Expression"
 
 -- | Top-level parser & alternatives in order of precedence.
---   This is broken up like this so we don't get caught in never-ending parse.
+--   This is broken up so we don't get caught in a never-ending parse.
 regex       = foldMany1 level1
 level1      = verticalbar <|> level2
 level2      = asterisk <|> plus <|> qmark <|> level3

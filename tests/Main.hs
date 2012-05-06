@@ -2,6 +2,7 @@
 
 import Control.Monad (when)
 import Data.Either (lefts)
+import Data.Maybe
 import System.Exit
 
 import Text.Regex.NFA.Compiler (compile)
@@ -55,7 +56,7 @@ main = do
     when (length failures > 0) exitFailure
 
 match :: String -> String -> Bool
-match = (flip matches) . compile
+match = (flip matches) . fromJust . compile
 
 matchE, nmatchE :: String -> String -> Either (String, String) ()
 matchE r s | match r s = Right ()
