@@ -1,9 +1,11 @@
 {- Run list of primitive tests.  Failing tests are displayed. -}
 
-import Compiler (compile)
+import Control.Monad (when)
 import Data.Either (lefts)
+import System.Exit
 
-import Regex
+import Text.Regex.NFA.Compiler (compile)
+import Text.Regex.NFA.Regex
 
 test :: [Either (String, String) ()]
 test = [ matchE   "a"                     "a"
@@ -47,7 +49,10 @@ test = [ matchE   "a"                     "a"
        ]
 
 main :: IO ()
-main = print $ lefts test
+main = do
+    let failures = lefts test
+    print failures
+    when (length failures > 0) exitFailure
 
 match :: String -> String -> Bool
 match = (flip matches) . compile

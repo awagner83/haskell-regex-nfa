@@ -1,11 +1,11 @@
-module Compiler (compile) where
+module Text.Regex.NFA.Compiler (compile) where
 
 import Control.Applicative ((<$>))
 import Data.List (foldl1')
 import Text.Parsec hiding (between)
 import Text.Parsec.String
 
-import Regex
+import Text.Regex.NFA.Regex
 
 
 compile :: String -> Regex

@@ -1,0 +1,26 @@
+Name:               Regex-NFA
+Version:            0.1
+Synopsis:           NFA-based regular expression engine
+Homepage:           https://github.com/awagner83/haskell-regex-nfa
+License:            BSD3
+License-file:       LICENSE
+Author:             Adam Wagner
+Maintainer:         awagner83@gmail.com
+Category:           Text
+Build-type:         Simple
+Cabal-version:      >=1.8
+
+Library
+  Exposed-modules:  Text.Regex.NFA.Compiler
+                    Text.Regex.NFA.Regex
+  Hs-Source-Dirs:   src
+  GHC-Options:      -Wall -O2
+  Build-depends:    base, parsec >= 3.1.1
+  
+Test-Suite test
+  Type:             exitcode-stdio-1.0
+  Hs-Source-Dirs:   tests
+  GHC-Options:      -Wall
+  Main-is:          Main.hs
+  Build-depends:    base, Regex-NFA
+

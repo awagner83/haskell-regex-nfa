@@ -1,4 +1,4 @@
-module Regex (Match(..), Regex(..), matches) where
+module Text.Regex.NFA.Regex (Match(..), Regex(..), matches) where
 
 
 data Match = LiteralChar Char | AnyChar | Range Char Char | MatchSet [Match]
