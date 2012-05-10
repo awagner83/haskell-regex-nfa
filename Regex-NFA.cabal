@@ -11,8 +11,9 @@ Build-type:         Simple
 Cabal-version:      >=1.8
 
 Library
-  Exposed-modules:  Text.Regex.NFA.Compiler
-                    Text.Regex.NFA.Regex
+  Exposed-modules:  Data.Match
+                    Data.NFA
+                    Text.Regex.NFA.Compiler
   Hs-Source-Dirs:   src
   GHC-Options:      -Wall -O2
   Build-depends:    base, parsec >= 3.1.1, mtl >= 2
