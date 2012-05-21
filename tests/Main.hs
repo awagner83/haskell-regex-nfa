@@ -5,8 +5,8 @@ import Data.Either (lefts)
 import Data.Maybe
 import System.Exit
 
-import Text.Regex.NFA.Compiler (compile)
-import Text.Regex.NFA.Regex
+import Text.Regex.NFA (compile)
+import Data.NFA
 
 test :: [Either (String, String) ()]
 test = [ matchE   "a"                     "a"

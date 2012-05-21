@@ -45,7 +45,7 @@ a ~= (All bs)          = all (a ~=) bs
 a ~= (Any bs)          = any (a ~=) bs
 a ~= (Not b)           = not $ a ~= b
 
--- | Construct between comparison
+-- | Construct between (inclusive) comparison
 between :: Ord a => a -> a -> Match a
-between a b = All [GreaterThan a, LessThan b]
+between a b = All [GreaterThanEq a, LessThanEq b]
 
